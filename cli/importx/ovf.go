@@ -32,8 +32,9 @@ type ovfx struct {
 
 	Importer importer.Importer
 
-	lease bool
-	net   string // No need for *flags.NetworkFlag here
+	lease       bool
+	noKeepAlive bool
+	net         string // No need for *flags.NetworkFlag here
 }
 
 func init() {
@@ -59,6 +60,7 @@ func (cmd *ovfx) Register(ctx context.Context, f *flag.FlagSet) {
 	f.BoolVar(&cmd.Importer.VerifyManifest, "m", false, "Verify checksum of uploaded files against manifest (.mf)")
 	f.BoolVar(&cmd.Importer.Hidden, "hidden", false, "Enable hidden properties")
 	f.BoolVar(&cmd.lease, "lease", false, "Output NFC Lease only")
+	f.BoolVar(&cmd.noKeepAlive, "no-keepalive", false, "Disable HTTP keep-alives during import (workaround for rhttpproxy/NFC issues)")
 	f.StringVar(&cmd.net, "net", "", "Network")
 }
 
@@ -160,6 +162,12 @@ func (cmd *ovfx) Prepare(f *flag.FlagSet) (string, error) {
 	cmd.Importer.Client, err = cmd.DatastoreFlag.Client()
 	if err != nil {
 		return "", err
+	}
+
+	if cmd.noKeepAlive {
+		t := cmd.Importer.Client.DefaultTransport().Clone()
+		t.DisableKeepAlives = true
+		cmd.Importer.Client.Transport = t
 	}
 
 	cmd.Importer.Datacenter, err = cmd.DatastoreFlag.Datacenter()

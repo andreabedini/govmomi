@@ -9,6 +9,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net/http"
 	"path"
 
 	"github.com/vmware/govmomi/cli"
@@ -22,8 +23,9 @@ type disk struct {
 	*flags.FolderFlag
 	*flags.OutputFlag
 
-	force bool
-	info  bool
+	force       bool
+	info        bool
+	noKeepAlive bool
 }
 
 func init() {
@@ -42,6 +44,7 @@ func (cmd *disk) Register(ctx context.Context, f *flag.FlagSet) {
 
 	f.BoolVar(&cmd.force, "force", false, "Overwrite existing disk")
 	f.BoolVar(&cmd.info, "i", false, "Output vmdk info only")
+	f.BoolVar(&cmd.noKeepAlive, "no-keepalive", false, "Disable HTTP keep-alives during import (workaround for rhttpproxy/NFC issues)")
 }
 
 func (cmd *disk) Process(ctx context.Context) error {
@@ -130,6 +133,16 @@ func (cmd *disk) Run(ctx context.Context, f *flag.FlagSet) error {
 		Datacenter: dc,
 		Pool:       pool,
 		Folder:     folder,
+	}
+
+	if cmd.noKeepAlive {
+		// soap.RoundTripper usually has a Transport field or embeds an http.Transport.
+		// If it exposes the underlying *http.Transport, clone and tweak it.
+		if transport, ok := c.Transport.(*http.Transport); ok {
+			t := transport.Clone()
+			t.DisableKeepAlives = true
+			c.Transport = t
+		}
 	}
 
 	err = vmdk.Import(ctx, c, src, ds, p)
