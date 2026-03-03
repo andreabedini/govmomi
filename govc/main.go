@@ -61,6 +61,7 @@ import (
 	_ "github.com/vmware/govmomi/cli/host/portgroup"
 	_ "github.com/vmware/govmomi/cli/host/service"
 	_ "github.com/vmware/govmomi/cli/host/storage"
+	_ "github.com/vmware/govmomi/cli/host/crypto"
 	_ "github.com/vmware/govmomi/cli/host/tpm"
 	_ "github.com/vmware/govmomi/cli/host/vnic"
 	_ "github.com/vmware/govmomi/cli/host/vswitch"

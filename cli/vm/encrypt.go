@@ -2,53 +2,52 @@
 // The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: Apache-2.0
 
-package tpm
+package vm
 
 import (
 	"context"
 	"flag"
-	"fmt"
 
 	"github.com/vmware/govmomi/cli"
 	"github.com/vmware/govmomi/cli/flags"
 	"github.com/vmware/govmomi/vim25/types"
 )
 
-type add struct {
+type encrypt struct {
 	*flags.VirtualMachineFlag
 	kmsProvider string
 	kmsKey      string
 }
 
 func init() {
-	cli.Register("device.tpm.add", &add{})
+	cli.Register("vm.encrypt", &encrypt{})
 }
 
-func (cmd *add) Register(ctx context.Context, f *flag.FlagSet) {
+func (cmd *encrypt) Register(ctx context.Context, f *flag.FlagSet) {
 	cmd.VirtualMachineFlag, ctx = flags.NewVirtualMachineFlag(ctx)
 	cmd.VirtualMachineFlag.Register(ctx, f)
 	f.StringVar(&cmd.kmsProvider, "kms-provider", "", "KMS provider ID")
 	f.StringVar(&cmd.kmsKey, "key-id", "", "KMS key ID")
 }
 
-func (cmd *add) Description() string {
-	return `Add Trusted Platform Module (TPM) device to VM.
+func (cmd *encrypt) Description() string {
+	return `Encrypt VM.
 
-The VM must be encrypted; if it is not already, it will be encrypted using
-the specified KMS provider (or the cluster default if -kms-provider is omitted).
+The VM must be powered off.
+If -kms-provider is omitted the cluster default KMS provider is used.
+If -key-id is omitted vSphere auto-generates a new key.
 
 Examples:
-  govc device.tpm.add -vm $name
-  govc device.tpm.add -vm $name -key-id <uuid>
-  govc device.info -vm $name tpm-*`
+  govc vm.encrypt -vm $vm
+  govc vm.encrypt -vm $vm -kms-provider my-kp
+  govc vm.encrypt -vm $vm -kms-provider my-kp -key-id <uuid>`
 }
 
-func (cmd *add) Run(ctx context.Context, f *flag.FlagSet) error {
+func (cmd *encrypt) Run(ctx context.Context, f *flag.FlagSet) error {
 	vm, err := cmd.VirtualMachine()
 	if err != nil {
 		return err
 	}
-
 	if vm == nil {
 		return flag.ErrHelp
 	}
@@ -64,34 +63,11 @@ func (cmd *add) Run(ctx context.Context, f *flag.FlagSet) error {
 		Crypto: &types.CryptoSpecEncrypt{
 			CryptoKeyId: cryptoKeyId,
 		},
-		DeviceChange: []types.BaseVirtualDeviceConfigSpec{
-			&types.VirtualDeviceConfigSpec{
-				Device:    &types.VirtualTPM{},
-				Operation: types.VirtualDeviceConfigSpecOperationAdd,
-			},
-		},
 	}
 
 	task, err := vm.Reconfigure(ctx, spec)
 	if err != nil {
 		return err
 	}
-	if err = task.Wait(ctx); err != nil {
-		return err
-	}
-
-	// output name of device we just created
-	devices, err := vm.Device(ctx)
-	if err != nil {
-		return err
-	}
-
-	d := &types.VirtualTPM{}
-	devices = devices.SelectByType(d)
-
-	name := devices.Name(devices[len(devices)-1])
-
-	fmt.Println(name)
-
-	return nil
+	return task.Wait(ctx)
 }

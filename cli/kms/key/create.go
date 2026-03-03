@@ -19,7 +19,7 @@ type create struct {
 }
 
 func init() {
-	cli.Register("kms.key.create", &create{}, true)
+	cli.Register("kms.key.create", &create{})
 }
 
 func (cmd *create) Register(ctx context.Context, f *flag.FlagSet) {

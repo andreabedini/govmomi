@@ -30,7 +30,7 @@ type info struct {
 }
 
 func init() {
-	cli.Register("kms.key.info", &info{}, true)
+	cli.Register("kms.key.info", &info{})
 }
 
 func (cmd *info) Register(ctx context.Context, f *flag.FlagSet) {

@@ -21,7 +21,7 @@ type rm struct {
 }
 
 func init() {
-	cli.Register("kms.key.rm", &rm{}, true)
+	cli.Register("kms.key.rm", &rm{})
 }
 
 func (cmd *rm) Register(ctx context.Context, f *flag.FlagSet) {
