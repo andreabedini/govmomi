@@ -34,6 +34,7 @@ import (
 	_ "github.com/vmware/govmomi/cli/device/sata"
 	_ "github.com/vmware/govmomi/cli/device/scsi"
 	_ "github.com/vmware/govmomi/cli/device/serial"
+	_ "github.com/vmware/govmomi/cli/device/tpm"
 	_ "github.com/vmware/govmomi/cli/device/usb"
 	_ "github.com/vmware/govmomi/cli/device/watchdog"
 	_ "github.com/vmware/govmomi/cli/disk"
