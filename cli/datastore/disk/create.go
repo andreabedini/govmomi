@@ -88,7 +88,7 @@ func (cmd *create) Run(ctx context.Context, f *flag.FlagSet) error {
 		dst = ds.Path(f.Arg(0))
 		task, err = m.CreateVirtualDisk(ctx, dst, dc, &cmd.spec.FileBackedVirtualDiskSpec)
 	} else {
-		dst = ds.Path(f.Arg(0))
+		dst = ds.Path(f.Arg(1))
 		task, err = m.CreateChildDisk(ctx, ds.Path(f.Arg(0)), dc, dst, dc, cmd.force)
 	}
 
